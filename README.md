@@ -1,0 +1,1 @@
+# MODIS_seasonal_snow_mask
