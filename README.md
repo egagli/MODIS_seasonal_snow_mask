@@ -1,8 +1,8 @@
-# MODIS seasonal snow mask creation + snow appearance and snow disappearance maps
+# MODIS seasonal snow presence
 ## Eric Gagliano   
 ## April 18th, 2024   
 
-This repository uses the MODIS MOD10A2 product hosted on Microsoft Planetary Computer to create seasonal snow masks and snow appearance and disappearance maps. This work is based on a method in Wrzesien et al., 2019.
+This repository uses the MODIS MOD10A2 product hosted on Microsoft Planetary Computer to create seasonal snow presence data: for each water year, we create maps of maximum number of consecutive snow days, snow appearance date, and snow disappearance date. This work is based on the global seasonal snow masking method in Wrzesien et al., 2019.
 
 MODIS MOD10A2 product guide: https://nsidc.org/sites/default/files/mod10a2-v006-userguide_1.pdf   
 Wrzesien et al. 2019 data product: https://zenodo.org/records/2626737   
