@@ -2,11 +2,13 @@
 Library of functions to create MODIS seasonal snow masks, snow appearance date, and snow disappearance date.
 
 Author: Eric Gagliano (egagli@uw.edu)
-Updated: 04/2024
+Created: 04/2024
 """
 
 import numpy as np
 import xarray as xr
+
+fill_value = np.iinfo(np.int16).min
 
 def binarize_with_cloud_filling(da):
     """
@@ -42,7 +44,7 @@ def get_longest_consec_stretch(arr):
 
     This function iterates over the input array and finds the longest stretch of 
     consecutive days where the value is True (indicating snow). It returns the start 
-    and end indices of this stretch, as well as its length.
+    and end indices (end+1) of this stretch, as well as its length.
 
     Parameters:
     arr (list or array-like): The input array. Each element should be a boolean 
@@ -51,7 +53,7 @@ def get_longest_consec_stretch(arr):
     Returns:
     tuple: A tuple containing three elements:
         - The start index of the longest consecutive stretch of snow days.
-        - The end index of the longest consecutive stretch of snow days.
+        - The end index (+1) of the longest consecutive stretch of snow days.
         - The length of the longest consecutive stretch of snow days.
     """
     max_len = 0
@@ -68,7 +70,7 @@ def get_longest_consec_stretch(arr):
                 if length > max_len:
                     max_len = length
                     max_start = current_start
-                    max_end = i - 1
+                    max_end = i
                 current_start = None
     if current_start is not None:
         length = len(arr) - current_start
@@ -76,6 +78,9 @@ def get_longest_consec_stretch(arr):
             max_len = length
             max_start = current_start
             max_end = len(arr) - 1
+
+    if max_len == 0:
+        return fill_value, fill_value, fill_value
     return max_start, max_end, max_len
 
 def map_DOWY_values(value,substitution_dict):
@@ -93,7 +98,8 @@ def map_DOWY_values(value,substitution_dict):
     Returns:
     numpy.ndarray: An array with the mapped values.
     """
-    return np.vectorize(substitution_dict.get)(value)
+    #return np.vectorize(substitution_dict.get)(value)
+    return np.vectorize(lambda x: substitution_dict.get(x, fill_value), otypes=[np.int16])(value)
     
 
 def get_max_consec_snow_days_SAD_SDD_one_WY(effective_snow_da):
@@ -115,7 +121,7 @@ def get_max_consec_snow_days_SAD_SDD_one_WY(effective_snow_da):
         - 'max_consec_snow_days': The maximum number of consecutive snow days for each water year.
     """
     
-    # Apply function along the time dimension using the effective snow data to count consecutive snow days, 
+    # Apply function along the time dimension using the effective snow data to count consecutive snow days 
     results = xr.apply_ufunc(
         get_longest_consec_stretch, 
         effective_snow_da,
@@ -123,7 +129,7 @@ def get_max_consec_snow_days_SAD_SDD_one_WY(effective_snow_da):
         output_core_dims=[[], [], []],
         vectorize=True,
         dask='parallelized',
-        output_dtypes=[int, int, int]
+        output_dtypes=[np.int16, np.int16, np.int16]
     )
 
     substitution_dict = {index: value for index, value in enumerate(effective_snow_da.DOWY.values)}
@@ -132,7 +138,7 @@ def get_max_consec_snow_days_SAD_SDD_one_WY(effective_snow_da):
     snow_start_DOWY = xr.apply_ufunc(
         map_DOWY_values,
         results[0],
-        kwargs={'substitution_dict':substitution_dict},
+        kwargs={'substitution_dict': substitution_dict},
         vectorize=True,
         dask='parallelized'
     )
@@ -140,16 +146,18 @@ def get_max_consec_snow_days_SAD_SDD_one_WY(effective_snow_da):
     snow_end_DOWY = xr.apply_ufunc(
         map_DOWY_values,
         results[1],
-        kwargs={'substitution_dict':substitution_dict},
+        kwargs={'substitution_dict': substitution_dict},
         vectorize=True,
         dask='parallelized'
     )
     
     snow_mask = xr.Dataset({
-        'SAD_DOWY': snow_start_DOWY.astype(np.int16),
-        'SDD_DOWY': snow_end_DOWY.astype(np.int16)+8, # first period WITHOUT snow
-        'max_consec_snow_days': results[2].astype(np.int16)*8
+        'SAD_DOWY': snow_start_DOWY,
+        'SDD_DOWY': snow_end_DOWY,
+        'max_consec_snow_days': snow_end_DOWY-snow_start_DOWY
     })
 
+    for var in snow_mask:
+        snow_mask[var].rio.write_nodata(fill_value, encoded=False, inplace=True)
 
     return snow_mask
