@@ -10,6 +10,7 @@ import xarray as xr
 import pystac_client
 import planetary_computer
 import odc.stac
+#import numba
 
 
 def get_modis_MOD10A2_max_snow_extent(
@@ -92,14 +93,14 @@ def binarize_with_cloud_filling(da):
     CLOUD_VALUE = 50
     NO_SNOW_VALUE = 25
 
-    effective_snow = xr.where(
-        (da.where(lambda x: x != CLOUD_VALUE).ffill(dim="time") == SNOW_VALUE)
-        & (da.where(lambda x: x != CLOUD_VALUE).bfill(dim="time") == SNOW_VALUE),
-        1,
-        0,
-    ).astype(bool)
+    # Avoid repeated ffill and bfill operations
+    ffilled = da.where(lambda x: x != CLOUD_VALUE).ffill(dim="time")
+    bfilled = da.where(lambda x: x != CLOUD_VALUE).bfill(dim="time")
+    
+    # Compute effective snow only once
+    effective_snow = xr.where((ffilled == SNOW_VALUE) & (bfilled == SNOW_VALUE), 1, 0).astype(bool)
 
-    return effective_snow.chunk(dict(time=-1))
+    return effective_snow
 
 
 def get_longest_consec_stretch(arr):
@@ -147,7 +148,6 @@ def get_longest_consec_stretch(arr):
         return fill_value, fill_value, fill_value
     return max_start, max_end, max_len
 
-
 def map_DOWY_values(value, substitution_dict):
     """
     Maps the input values based on a predefined substitution dictionary.
@@ -167,6 +167,7 @@ def map_DOWY_values(value, substitution_dict):
     return np.vectorize(
         lambda x: substitution_dict.get(x, fill_value), otypes=[np.int16]
     )(value)
+
 
 
 def get_max_consec_snow_days_SAD_SDD_one_WY(effective_snow_da):
@@ -196,6 +197,7 @@ def get_max_consec_snow_days_SAD_SDD_one_WY(effective_snow_da):
         output_core_dims=[[], [], []],
         vectorize=True,
         dask="parallelized",
+        dask_gufunc_kwargs={'allow_rechunk':True},
         output_dtypes=[np.int16, np.int16, np.int16],
     )
 
@@ -219,6 +221,8 @@ def get_max_consec_snow_days_SAD_SDD_one_WY(effective_snow_da):
         dask="parallelized",
     )
 
+
+
     snow_mask = xr.Dataset(
         {
             "SAD_DOWY": snow_start_DOWY,
@@ -231,3 +235,5 @@ def get_max_consec_snow_days_SAD_SDD_one_WY(effective_snow_da):
         snow_mask[var].rio.write_nodata(fill_value, encoded=False, inplace=True)
 
     return snow_mask
+
+
