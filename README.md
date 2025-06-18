@@ -1,21 +1,30 @@
 # MODIS Seasonal Snow Cover Data
 
 **Author:** Eric Gagliano  
-**Date:** April 18th, 2024
+**Date:** April 18th, 2024  
 **Last updated:** June 6, 2025
 
 ## Overview
 
 This repository processes MODIS MOD10A2 snow cover data from the Microsoft Planetary Computer to create seasonal snow presence products. For each water year, the pipeline generates maps showing:
-- Maximum number of consecutive snow days for each pixel.
-- Date of snow appearance (SAD).
-- Date of snow disappearance (SDD).
+- Maximum number of consecutive snow days for each pixel [max_consec_snow_days].
+- Date of snow appearance / first day of snow cover for the max snow cover snow period [SAD_DOWY].
+- Date of snow disappearance / first day of no snow cover for the max snow snow period [SDD_DOWY].
+
+*Note: SAD_DOWY and SDD_DOWY dates are represented as day of water year, e.g. DOWY 1 in NH is October 1st.*
 
 These outputs are useful for hydrologic, climate, and ecological studies that require spatially explicit seasonal snow persistence.
 
 - [MODIS MOD10A2 Product Guide](https://nsidc.org/sites/default/files/mod10a2-v006-userguide_1.pdf)
 - [Wrzesien et al. 2019 Data Product](https://zenodo.org/records/2626737)
-- [MODIS Grid System](https://modis-land.gsfc.nasa.gov/MODLAND_grid.html)
+- [MODIS Grid System](https://modis-land.gsfc.nasa.gov/MODLAND_grid.html)  
+
+## Data product  
+
+Check out the processed data product on zenodo for water years 2015-2024:
+
+Gagliano, E. (2025). Global MODIS-derived seasonal snow cover (snow appearance date, disappearance date, and max consec snow days), water years 2015–2024 (1.0.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.15692530
+
 
 ## Processing Steps
 
@@ -82,7 +91,7 @@ These outputs are useful for hydrologic, climate, and ecological studies that re
 ## References
 
 - Wrzesien, M. L., Pavelsky, T. M., Durand, M. T., Dozier, J., & Lundquist, J. D. (2019). Characterizing biases in mountain snow accumulation from global data sets. Water Resources Research, 55, 9872–9891. [doi:10.1029/2019WR024908](https://doi.org/10.1029/2019WR024908)
-- MODIS MOD10A2 documentation and product guides.
+- [MODIS MOD10A2 documentation and product guides](https://nsidc.org/sites/default/files/mod10a2-v006-userguide_1.pdf)
 
 ## Example Usage
 
