@@ -80,13 +80,11 @@ Gagliano, E. (2025). Global MODIS-derived seasonal snow cover (snow appearance d
 
 ## File Descriptions
 
-- **README.md**: This file.
 - **global_processing.ipynb**: Main pipeline for batch processing MODIS tiles, cloud computation setup, and data writing.
 - **make_grid_and_zarr_store.ipynb**: Constructs MODIS grid, outputs tile list, and initializes the Zarr store.
 - **modis_masking.py**: Library for MODIS data processing, masking, cloud filling, and snow metric calculation.
 - **modis_tile_processing_list.txt**: List of MODIS tiles (h/v grid) overlapping land, to be processed.
-- **evaluation/**: (Directory for evaluation scripts or results; content not listed here.)
-- **.gitignore**: Standard gitignore for Python/data science projects.
+- **evaluation/**: (Directory for evaluation scripts and scratch work; content not listed here.)
 
 ## References
 
